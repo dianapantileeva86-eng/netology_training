@@ -79,22 +79,22 @@ def handle_del_shelf():
 def main():
     while True:
         command = input("Введите команду:\n").strip().lower()
-
-        if command == "q":
-            print("Программа завершена.")
-            break
-        elif command == "book_info":
-            handle_book_info()
-        elif command == "shelf":
-            handle_shelf()
-        elif command == "all":
-            handle_all()
-        elif command == "add_shelf":
-            handle_add_shelf()
-        elif command == "del_shelf":
-            handle_del_shelf()
-        else:
-            print("Неизвестная команда. Доступные команды: book_info, shelf, all, add_shelf, del_shelf, q")
+        match command:
+            case "q":
+                print("Программа завершена.")
+                break
+            case "book_info":
+                handle_book_info()
+            case "shelf":
+                handle_shelf()
+            case "all":
+                handle_all()
+            case "add_shelf":
+                handle_add_shelf()
+            case "del_shelf":
+                handle_del_shelf()
+            case _:
+                print("Неизвестная команда. Доступные команды: book_info, shelf, all, add_shelf, del_shelf, q")
 
 if __name__ == "__main__":
     main()
