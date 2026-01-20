@@ -76,25 +76,25 @@ def handle_del_shelf():
     else:
         del directories[shelf_number]
         print(f"Полка удалена. Текущий перечень полок: {get_all_shelves()}.")
-def main():
-    while True:
-        command = input("Введите команду:\n").strip().lower()
-        match command:
-            case "q":
-                print("Программа завершена.")
-                break
-            case "book_info":
-                handle_book_info()
-            case "shelf":
-                handle_shelf()
-            case "all":
-                handle_all()
-            case "add_shelf":
-                handle_add_shelf()
-            case "del_shelf":
-                handle_del_shelf()
-            case _:
-                print("Неизвестная команда. Доступные команды: book_info, shelf, all, add_shelf, del_shelf, q")
-
-if __name__ == "__main__":
-    main()
+# def main():
+#     while True:
+#         command = input("Введите команду:\n").strip().lower()
+#         match command:
+#             case "q":
+#                 print("Программа завершена.")
+#                 break
+#             case "book_info":
+#                 handle_book_info()
+#             case "shelf":
+#                 handle_shelf()
+#             case "all":
+#                 handle_all()
+#             case "add_shelf":
+#                 handle_add_shelf()
+#             case "del_shelf":
+#                 handle_del_shelf()
+#             case _:
+#                 print("Неизвестная команда. Доступные команды: book_info, shelf, all, add_shelf, del_shelf, q")
+#
+# if __name__ == "__main__":
+#     main()
