@@ -7,14 +7,10 @@ https://pythonworld.ru/tipy-dannyx-v-python/stroki-funkcii-i-metody-strok.html
 
 import pandas as pd
 
-# URL страницы
 url = "https://pythonworld.ru/tipy-dannyx-v-python/stroki-funkcii-i-metody-strok.html"
 
-# Импорт всех таблиц со страницы
 tables = pd.read_html(url)
 
-# На этой странице только одна таблица — заберём её
-df = tables[0]
 
-# Покажем результат
+df = tables[0]
 print(df.head())
