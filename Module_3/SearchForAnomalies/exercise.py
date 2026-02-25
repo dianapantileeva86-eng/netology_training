@@ -9,22 +9,22 @@
 Рассчитать количество пропусков для всех выбранных столбцов. Принять и обосновать решение о методе заполнения пропусков по каждому столбцу на основе рассчитанных статистик и возможной взаимосвязи значений в них. Сформировать датафрейм, в котором пропуски будут отсутствовать.
 
 """
+import logging
+
 import pandas as pd
 import numpy as np
 import warnings
 warnings.filterwarnings('ignore')
 
 # Задание 1
-df_raw = pd.read_csv('horse_data.csv', header=None)
-
 selected_columns = [0, 1, 3, 4, 5, 6, 10, 22]
 column_names = ['surgery', 'age', 'rectal_temperature', 'pulse',
                 'respiratory_rate', 'extremities_temp', 'pain', 'outcome']
 
-df = df_raw[selected_columns].copy()
-df.columns = column_names
-df = df.replace('?', np.nan)
+df = pd.read_csv('horse_data.csv', header=None, usecols=selected_columns,
+                 names=column_names, na_values='?')
 
+# Преобразование типов
 numeric_cols = ['rectal_temperature', 'pulse', 'respiratory_rate']
 for col in numeric_cols:
     df[col] = pd.to_numeric(df[col], errors='coerce')
@@ -32,6 +32,8 @@ for col in numeric_cols:
 categorical_cols = ['surgery', 'age', 'extremities_temp', 'pain', 'outcome']
 for col in categorical_cols:
     df[col] = pd.to_numeric(df[col], errors='coerce')
+df['age'] = df['age'].replace(9, 2)
+
 # Задание 2
 missing = df.isnull().sum()
 missing_pct = (missing / len(df) * 100).round(2)
@@ -77,79 +79,90 @@ for col in numeric_cols:
         })
 
 # Задание 3
-df_filled = df.copy()
-filling_strategy = {}
+df_simple = df.copy()
+for col in numeric_cols:
+    df_simple[col] = df_simple[col].fillna(df_simple[col].median())
+for col in categorical_cols:
+    df_simple[col] = df_simple[col].fillna(df_simple[col].mode()[0])
 
-col = 'surgery'
-mode_val = int(df[col].mode()[0])
-df_filled[col] = df_filled[col].fillna(mode_val)
-filling_strategy[col] = {'method': 'mode', 'value': mode_val}
+df_grouped = df.copy()
+for col in numeric_cols:
+    df_grouped[col] = df_grouped[col].fillna(
+        df_grouped.groupby(['surgery', 'age'])[col].transform('median')
+    )
+    df_grouped[col] = df_grouped[col].fillna(df_grouped[col].median())
 
-col = 'age'
-mode_val = int(df[col].mode()[0])
-df_filled[col] = df_filled[col].fillna(mode_val)
-filling_strategy[col] = {'method': 'mode', 'value': mode_val}
+for col in categorical_cols:
+    df_grouped[col] = df_grouped[col].fillna(
+        df_grouped.groupby(['surgery', 'age'])[col].transform(lambda x: x.mode()[0] if not x.mode().empty else None)
+    )
+    df_grouped[col] = df_grouped[col].fillna(df_grouped[col].mode()[0])
 
-col = 'rectal_temperature'
-median_val = round(df[col].median(), 2)
-df_filled[col] = df_filled[col].fillna(median_val)
-filling_strategy[col] = {'method': 'median', 'value': median_val}
+# Сравнение статистик до и после
+comparison_stats = []
+for col in numeric_cols:
+    comparison_stats.append({
+        'Столбец': col,
+        'Медиана (до)': round(df[col].median(), 2),
+        'Медиана (простое)': round(df_simple[col].median(), 2),
+        'Медиана (группы)': round(df_grouped[col].median(), 2),
+        'Пропусков': int(missing[col])
+    })
+comparison_df = pd.DataFrame(comparison_stats)
 
-col = 'pulse'
-median_val = round(df[col].median(), 2)
-df_filled[col] = df_filled[col].fillna(median_val)
-filling_strategy[col] = {'method': 'median', 'value': median_val}
+cat_analysis = {}
+for col in categorical_cols:
+    cat_analysis[col] = {
+        'unique': df[col].unique().tolist(),
+        'mode': int(df[col].mode()[0]) if not df[col].mode().empty else None,
+        'distribution': df[col].value_counts().sort_index().to_dict()
+    }
 
-col = 'respiratory_rate'
-median_val = round(df[col].median(), 2)
-df_filled[col] = df_filled[col].fillna(median_val)
-filling_strategy[col] = {'method': 'median', 'value': median_val}
-
-col = 'extremities_temp'
-mode_val = int(df[col].mode()[0])
-df_filled[col] = df_filled[col].fillna(mode_val)
-filling_strategy[col] = {'method': 'mode', 'value': mode_val}
-
-col = 'pain'
-mode_val = int(df[col].mode()[0])
-df_filled[col] = df_filled[col].fillna(mode_val)
-filling_strategy[col] = {'method': 'mode', 'value': mode_val}
-
-col = 'outcome'
-mode_val = int(df[col].mode()[0])
-df_filled[col] = df_filled[col].fillna(mode_val)
-filling_strategy[col] = {'method': 'mode', 'value': mode_val}
-
-remaining_missing = df_filled.isnull().sum()
-# Обработанные данные
-df_filled.to_csv('horse_data_final.csv', index=False, encoding='utf-8')
-
-# Статистики
+df_grouped.to_csv('horse_data_final.csv', index=False, encoding='utf-8')
 stats_df.to_csv('horse_data_statistics.csv', index=False, encoding='utf-8')
+comparison_df.to_csv('horse_data_comparison.csv', index=False, encoding='utf-8')
 
 with open('horse_data_report.txt', 'w', encoding='utf-8') as f:
     f.write("ОТЧЁТ ПО АНАЛИЗУ ДАННЫХ HORSE COLIC\n\n")
     f.write(f"Записей: {df.shape[0]}, Столбцов: {df.shape[1]}\n\n")
-    f.write("ПРОПУСКИ (до обработки):\n")
+    f.write("ВЫВОДЫ ПО КАТЕГОРИАЛЬНЫМ ПЕРЕМЕННЫМ\n")
+    for col, info in cat_analysis.items():
+        f.write(f"Уникальные значения: {info['unique']}\n")
+        f.write(f"Мода: {info['mode']}\n")
+        f.write(f"Распределение: {info['distribution']}\n")
+
+    f.write("ПРОПУСКИ (до обработки)\n")
     for col, count, pct in zip(missing.index, missing.values, missing_pct.values):
         f.write(f"  {col}: {count} ({pct}%)\n")
-    f.write(f"Всего пропущено: {missing.sum()}\n\n")
-    f.write("БАЗОВЫЕ СТАТИСТИКИ:\n")
+    f.write(f"Всего пропущено: {missing.sum()}\n")
+
+    f.write("БАЗОВЫЕ СТАТИСТИКИ\n")
     f.write(stats_df.to_string(index=False))
-    f.write("ВЫБРОСЫ (IQR):\n")
+
+    f.write("\nВЫБРОСЫ (IQR)\n")
     for item in outliers_report:
-        f.write(f"  {item['Столбец']}: {item['Выбросов']} выбросов\n")
-    f.write("ЗАПОЛНЕНИЕ ПРОПУСКОВ:\n")
-    for col, info in filling_strategy.items():
-        f.write(f"  {col}: {info['method']} = {info['value']}\n")
-    f.write(f"Пропусков после обработки: {remaining_missing.sum()}\n")
+        f.write(f"\n{item['Столбец']}:\n")
+        f.write(f"Границы: [{item['Нижняя граница']}, {item['Верхняя граница']}]\n")
+        f.write(f"Выбросов: {item['Выбросов']}\n")
+        f.write(f"Значения: {item['Значения']}\n")
 
-# Стратегия заполнения
-import json
-with open('filling_strategy.json', 'w', encoding='utf-8') as f:
-    json.dump(filling_strategy, f, ensure_ascii=False, indent=2)
+    f.write("ВЫВОДЫ\n")
+    f.write("pulse (164, 150, 146...): Может быть реальным - при боли пульс значительно повышается.\n")
+    f.write("rectal_temperature (35.4, 40.8): 40.8 - возможна лихорадка, 35.4 - гипотермия при шоке.\n")
+    f.write("respiratory_rate (96, 90): При респираторном дистрессе частота дыхания растёт.\n")
+    f.write("Вывод: Большинство выбросов - естественные значения при тяжёлых состояниях, не ошибки.\n")
 
+    f.write("СРАВНЕНИЕ МЕТОДОВ ЗАПОЛНЕНИЯ\n")
+    f.write(comparison_df.to_string(index=False))
+
+    f.write("\nВЫВОДЫ ПО ЗАПОЛНЕНИЮ\n")
+    f.write("Групповое заполнение учитывает взаимосвязи (например, температура может отличаться у лошадей с операцией и без)\n")
+    f.write("Разница между методами небольшая, т.к. пропусков 30% и группы неоднородны.\n")
+
+    f.write(f"Пропусков после обработки: {df_grouped.isnull().sum().sum()}\n")
+
+print("Обработка завершена")
 print(f"Записей: {df.shape[0]}, Столбцов: {df.shape[1]}")
-print(f"Пропусков до: {missing.sum()}, после: {remaining_missing.sum()}")
+print(f"Пропусков до: {missing.sum()}, после: {df_grouped.isnull().sum().sum()}")
 print(f"Выбросов найдено: {sum(item['Выбросов'] for item in outliers_report)}")
-print("Созданные файлы: horse_data_final.csv, horse_data_statistics.csv, horse_data_report.txt, filling_strategy.json")
+print("Файлы: horse_data_final.csv, horse_data_statistics.csv, horse_data_comparison.csv, horse_data_report.txt")
