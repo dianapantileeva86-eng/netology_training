@@ -1,0 +1,34 @@
+{
+  "surgery": {
+    "method": "mode",
+    "value": 1
+  },
+  "age": {
+    "method": "mode",
+    "value": 1
+  },
+  "rectal_temperature": {
+    "method": "median",
+    "value": 38.2
+  },
+  "pulse": {
+    "method": "median",
+    "value": 64.0
+  },
+  "respiratory_rate": {
+    "method": "median",
+    "value": 24.5
+  },
+  "extremities_temp": {
+    "method": "mode",
+    "value": 3
+  },
+  "pain": {
+    "method": "mode",
+    "value": 3
+  },
+  "outcome": {
+    "method": "mode",
+    "value": 1
+  }
+}

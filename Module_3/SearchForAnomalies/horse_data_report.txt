@@ -1,0 +1,33 @@
+ОТЧЁТ ПО АНАЛИЗУ ДАННЫХ HORSE COLIC
+
+Записей: 300, Столбцов: 8
+
+ПРОПУСКИ (до обработки):
+  surgery: 1 (0.33%)
+  age: 0 (0.0%)
+  rectal_temperature: 60 (20.0%)
+  pulse: 24 (8.0%)
+  respiratory_rate: 58 (19.33%)
+  extremities_temp: 56 (18.67%)
+  pain: 55 (18.33%)
+  outcome: 1 (0.33%)
+Всего пропущено: 255
+
+БАЗОВЫЕ СТАТИСТИКИ:
+           Столбец  Count  Mean  Median   Std  Min   Q1   Q3   Max  IQR
+rectal_temperature    240 38.17    38.2  0.73 35.4 37.8 38.5  40.8  0.7
+             pulse    276 71.91    64.0 28.63 30.0 48.0 88.0 184.0 40.0
+  respiratory_rate    242 30.42    24.5 17.64  8.0 18.5 36.0  96.0 17.5ВЫБРОСЫ (IQR):
+  rectal_temperature: 14 выбросов
+  pulse: 5 выбросов
+  respiratory_rate: 17 выбросов
+ЗАПОЛНЕНИЕ ПРОПУСКОВ:
+  surgery: mode = 1
+  age: mode = 1
+  rectal_temperature: median = 38.2
+  pulse: median = 64.0
+  respiratory_rate: median = 24.5
+  extremities_temp: mode = 3
+  pain: mode = 3
+  outcome: mode = 1
+Пропусков после обработки: 0
